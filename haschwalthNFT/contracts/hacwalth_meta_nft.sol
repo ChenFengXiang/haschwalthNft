@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 contract HaschwalthMeta is ERC721Enumerable, Ownable {
     using Strings for uint256;
@@ -14,9 +15,22 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
 
     // Constants
     uint256 public constant MAX_SUPPLY = 10000;
-    uint256 public mintPrice = 0 ether;
+    uint256 public mintPrice = 0.005 ether;
     uint256 public maxBalance = 1;
     uint256 public maxMint = 10;
+    
+    // The bit position of `aux` in packed address data.
+    uint256 private constant BITPOS_AUX = 192;
+    // Mapping owner address to address data.
+    //
+    // Bits Layout:
+    // - [0..63]    `balance`
+    // - [64..127]  `numberMinted`
+    // - [128..191] `numberBurned`
+    // - [192..255] `aux`
+    mapping(address => uint256) private _packedAddressData;
+    // Mask of all 256 bits in packed address data except the 64 bits for `aux`.
+    uint256 private constant BITMASK_AUX_COMPLEMENT = (1 << 192) - 1;
 
     string baseURI;
     string public notRevealedUri;
@@ -25,7 +39,7 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
     mapping(uint256 => string) private _tokenURIs;
 
     constructor(string memory initBaseURI, string memory initNotRevealedUri)
-        ERC721("Haschwalth Meta", "HM")
+        ERC721("JOJO Meta", "JOJO")
     {
         setBaseURI(initBaseURI);
         setNotRevealedURI(initNotRevealedUri);
@@ -41,11 +55,20 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
             balanceOf(msg.sender) + tokenQuantity <= maxBalance,
             "Sale would exceed max balance"
         );
+        uint256 requiredValue = tokenQuantity * mintPrice;
+        uint256 userMinted = _getAux(msg.sender);
+        if (userMinted == 0) requiredValue -= mintPrice;
+        userMinted += tokenQuantity;
         require(
-            tokenQuantity * mintPrice <= msg.value,
+            userMinted <= maxMint,
+            "Can only mint 10 tokens at a time"
+        );
+        _setAux(msg.sender, userMinted);
+        require(
+            requiredValue <= msg.value,
             "Not enough ether sent"
         );
-        require(tokenQuantity <= maxMint, "Can only mint 1 tokens at a time");
+        //require(tokenQuantity <= maxMint, "Can only mint 1 tokens at a time");
 
         _mintHaschwalthMeta(tokenQuantity);
     }
@@ -94,6 +117,27 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
     // internal
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
+    }
+
+        /**
+     * Returns the auxillary data for `owner`. (e.g. number of whitelist mint slots used).
+     */
+    function _getAux(address owner) internal view returns (uint64) {
+        return uint64(_packedAddressData[owner] >> BITPOS_AUX);
+    }
+
+    /**
+     * Sets the auxillary data for `owner`. (e.g. number of whitelist mint slots used).
+     * If there are multiple variables, please pack them into a uint64.
+     */
+    function _setAux(address owner, uint256 aux) internal {
+        uint256 packed = _packedAddressData[owner];
+        uint256 auxCasted;
+        assembly { // Cast aux without masking.
+            auxCasted := aux
+        }
+        packed = (packed & BITMASK_AUX_COMPLEMENT) | (auxCasted << BITPOS_AUX);
+        _packedAddressData[owner] = packed;
     }
 
     //only owner
