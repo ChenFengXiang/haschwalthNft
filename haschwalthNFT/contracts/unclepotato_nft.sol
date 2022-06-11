@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-contract HaschwalthMeta is ERC721Enumerable, Ownable {
+contract unclePotato is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
     bool public _isSaleActive = false;
@@ -16,7 +16,7 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
     // Constants
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public mintPrice = 0.005 ether;
-    uint256 public maxBalance = 1;
+    uint256 public maxBalance = 10;
     uint256 public maxMint = 10;
 
     // The bit position of `aux` in packed address data.
@@ -39,18 +39,18 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
     mapping(uint256 => string) private _tokenURIs;
 
     constructor(string memory initBaseURI, string memory initNotRevealedUri)
-        ERC721("JOJO Meta", "JOJO")
+        ERC721("unclePotato", "UP")
     {
         setBaseURI(initBaseURI);
         setNotRevealedURI(initNotRevealedUri);
     }
 
-    function mintHaschwalthMeta(uint256 tokenQuantity) public payable {
+    function mint(uint256 tokenQuantity) public payable {
         require(
             totalSupply() + tokenQuantity <= MAX_SUPPLY,
             "Sale would exceed max supply"
         );
-        require(_isSaleActive, "Sale must be active to mint NicMetas");
+        require(_isSaleActive, "Sale must be active to mint unclePotato");
         require(
             balanceOf(msg.sender) + tokenQuantity <= maxBalance,
             "Sale would exceed max balance"
@@ -68,12 +68,11 @@ contract HaschwalthMeta is ERC721Enumerable, Ownable {
             requiredValue <= msg.value,
             "Not enough ether sent"
         );
-        //require(tokenQuantity <= maxMint, "Can only mint 1 tokens at a time");
 
-        _mintHaschwalthMeta(tokenQuantity);
+        _mintUnclePotato(tokenQuantity);
     }
 
-    function _mintHaschwalthMeta(uint256 tokenQuantity) internal {
+    function _mintUnclePotato(uint256 tokenQuantity) internal {
         for (uint256 i = 0; i < tokenQuantity; i++) {
             uint256 mintIndex = totalSupply();
             if (totalSupply() < MAX_SUPPLY) {
