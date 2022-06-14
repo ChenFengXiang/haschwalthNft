@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-contract unclePotato is ERC721Enumerable, Ownable {
+contract UnclePotato is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
     bool public _isSaleActive = false;
@@ -39,7 +39,7 @@ contract unclePotato is ERC721Enumerable, Ownable {
     mapping(uint256 => string) private _tokenURIs;
 
     constructor(string memory initBaseURI, string memory initNotRevealedUri)
-        ERC721("unclePotato", "UP")
+        ERC721("UnclePotato", "UP")
     {
         setBaseURI(initBaseURI);
         setNotRevealedURI(initNotRevealedUri);
